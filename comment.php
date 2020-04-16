@@ -23,7 +23,7 @@
     <script src="js/check.js"></script>
     <script>
       r = <?php echo $_SESSION['randomNumber']; ?>;
-      if (<?php echo isset($_SESSION['username']) * 1 ?> == 0) check('comment');
+      if (<?php echo isset($_COOKIE['JWT']) * 1 ?> == 1 && <?php echo isset($_SESSION['username']) * 1 ?> == 0) check('index');
       var totalPage = getComment(<?php echo (int) trim($_GET['page']) ?>);
     </script>
   </head>

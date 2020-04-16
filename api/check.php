@@ -31,12 +31,11 @@
     $url = array();
     array_push($url, $configs['referer']);
     array_push($url, $configs['referer'] . "index.php");
-    array_push($url, $configs['referer'] . "comment.php");
     array_push($url, $configs['referer'] . "login.php");
     array_push($url, $configs['referer'] . "register.php");
     array_push($url, $configs['referer'] . "profile.php");
 
-    if (!(in_array($_SERVER['HTTP_REFERER'], $url))) {
+    if (!(in_array($_SERVER['HTTP_REFERER'], $url)) && (strpos($_SERVER['HTTP_REFERER'], $configs['referer'] . "comment.php?page=") !== 0)) {
         if ($configs['debug'])
             $aResult['error'] = "Unauthorized referer.";
     }
