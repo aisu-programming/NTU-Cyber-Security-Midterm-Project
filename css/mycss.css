@@ -1,0 +1,9 @@
+html, body {
+    height: 100%;
+}
+#login-form {
+    max-width: 600px;
+}
+#register-form {
+    max-width: 600px;
+}
