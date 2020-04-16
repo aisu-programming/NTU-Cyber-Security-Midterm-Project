@@ -64,9 +64,15 @@
                         break;
                     }
 
+                    // Create table 'user'
+                    $sql_result = $db->query(sqlcmd_createUserTable());
+                    if ($sql_result === FALSE && $db->error !== "Table 'user' already exists") {
+                        $aResult['error'] = $db->error;
+                        break;
+                    }
+
                     // Hash password by SHA512
-                    $sha512_pwd = hash('sha512', $_POST['password']);
-                    $sql_result = $db->query(sqlcmd_getUser($_POST['username'], $sha512_pwd));
+                    $sql_result = $db->query(sqlcmd_getUser($_POST['username'], $_POST['password']));
 
                     // Query failed
                     if ($sql_result === FALSE) {
@@ -83,9 +89,7 @@
                         $aResult['error'] = "Unexpected error! (Please report if you are not attacking me)";
                     }
                     else {
-                        $username = $sql_result->fetch_assoc()["username"];
-
-                        $jwt_result = jwt_create($username,
+                        $jwt_result = jwt_create($_POST['username'],
                                                  $configs['isser'],
                                                  $configs['exp'],
                                                  $configs['key']);
@@ -94,7 +98,7 @@
                         }
                         else {
                             header($_SERVER['SERVER_PROTOCOL'] . " 200");
-                            $aResult['result'] = "Login succeed by '$username'.";
+                            $aResult['result'] = "Login succeed by '" . $_POST['username'] . "'.";
                         }
                     }
                     

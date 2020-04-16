@@ -1,5 +1,8 @@
 <?php
   session_start();
+
+  if (!isset($_COOKIE['JWT'])) unset($_SESSION['username']);
+
   $_SESSION['randomNumber'] = mt_rand();
 ?>
 
@@ -17,49 +20,73 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/login.js"></script>
-    <script src="js/redirect.js"></script>
+    <script src="js/check.js"></script>
     <script>
-
       r = <?php echo $_SESSION['randomNumber']; ?>;
-
-      if (<?php echo isset($_SESSION['username']) * 1 ?> == 0) checkRedirect('index');
-
-      $(document).ready(function () {
-        if (<?php echo isset($_SESSION['username']) * 1 ?> == 1) {
-          document.getElementById("profile-btn").style.display = "inherit";
-          document.getElementById("login-btn").style.display = "none";
-          document.getElementById("register-btn").style.display = "none";
-        }
-      })
-
+      if (<?php echo isset($_SESSION['username']) * 1 ?> == 0) check('index');
     </script>
   </head>
 
   <body>
     <div class="container-fluid h-100">
+
       <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
         <a class="navbar-brand p-0" href="/">
           <img src="logo.png" alt="Logo" style="width: 50px;">
           NTNU-Aisu
         </a>
         <ul class="navbar-nav">
-          <li class="nav-item" id="profile-btn" style="display: none;">
-            <a class="nav-link" href="/profile.php">個人頁面</a>
-          </li>
+
+          <?php if (isset($_SESSION['username']) && isset($_COOKIE['JWT'])) { ?>
+            <li class="nav-item">
+              <a class="nav-link" href="/profile.php">個人頁面</a>
+            </li>
+          <?php } ?>
+
           <li class="nav-item">
-            <a class="nav-link" href="/comment.php">留言版</a>
+            <a class="nav-link" href="/comment.php?page=1">留言版</a>
           </li>
-          <li class="nav-item" id="login-btn" style="display: inherit;">
-            <a class="nav-link" href="/login.php">登入</a>
-          </li>
-          <li class="nav-item" id="register-btn" style="display: inherit;">
-            <a class="nav-link" href="/register.php">註冊</a>
-          </li>
-          <!-- <li class="nav-item">
-            <a class="nav-link disabled" href="#">Disabled</a>
-          </li> -->
+
+          <?php // Not having both SESSION and JWT ?>
+          <?php if (!isset($_SESSION['username']) || !isset($_COOKIE['JWT'])) { ?>
+            <li class="nav-item">
+              <a class="nav-link" href="/login.php">登入</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/register.php">註冊</a>
+            </li>
+          <?php } ?>
+
         </ul>
       </nav>
+
+      <div class="row justify-content-start align-content-center h-100" style="padding-top: 65px;">
+        <div class="col-6 col-md-5">
+          <div class="row justify-content-end h-100" style="padding-left: 15px;">
+            <img class="img-thumbnail" style="max-height: 600px; object-fit: contain;" src="me.jpg" alt="Me">
+          </div>
+        </div>
+        <div class="col-6 col-md-7">
+          <div class="row justify-content-start align-content-center h-100">
+            <div class="col-12">
+              <div class="card" id="login-form" style="max-width: 500px;">
+                <div class="card-header" align="center">個人簡介</div>
+                <div class="card-body">
+                  <div class="form-group text-left">
+                    <a>姓名：<br/>
+                    　洪偉倫<br/>
+                    綽號：<br/>
+                    　冰塊<br/><br/>
+                    目前就讀：<br/>
+                    　台師大資工大二<br/></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
     </div>
   </body>
 

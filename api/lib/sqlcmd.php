@@ -13,15 +13,18 @@
         exit;
     }
 
-    function stringSymmetric(string $input) : string {
-        $output = $input;
-        return $output;
+    function stringEncode(string $input) : string {
+        return base64_encode($input);
+    }
+
+    function stringDecode(string $input) : string {
+        return base64_decode($input);
     }
 
     function sqlcmd_createUserTable() : string {
         return "CREATE TABLE user (
-                    id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
-                    username VARCHAR(64) NOT NULL UNIQUE,
+                    id INT(4) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
+                    username VARCHAR(40) NOT NULL UNIQUE,
                     password VARCHAR(128) NOT NULL,
                     reg_date TIMESTAMP, -- NOT NULL,
                     avatar VARCHAR(40) NOT NULL DEFAULT 'https://i.imgur.com/9B9e2OY.png'
@@ -29,42 +32,73 @@
     }
 
     function sqlcmd_checkUserExist(string $username) : string {
+
+        $encode_username = stringEncode($username);
+
         return "SELECT username FROM user 
-                WHERE username = '$username'";
+                WHERE username = '$encode_username'";
     }
     
-    function sqlcmd_addUser(string $username, string $sha512_pwd) : string {
+    function sqlcmd_addUser(string $username, string $password) : string {
+
+        $encode_username = stringEncode($username);
+        $sha512_pwd = hash('sha512', $password);
+
         return "INSERT INTO user (username, password) 
-                VALUES ('$username', '$sha512_pwd')";
+                VALUES ('$encode_username', '$sha512_pwd')";
     }
     
-    function sqlcmd_getUser(string $username, string $sha512_pwd) : string {
+    function sqlcmd_getUser(string $username, string $password) : string {
+
+        $encode_username = stringEncode($username);
+        $sha512_pwd = hash('sha512', $password);
+
         return "SELECT username FROM user 
-                WHERE username = '$username' && password = '$sha512_pwd'";
+                WHERE username = '$encode_username' && password = '$sha512_pwd'";
     }
     
     function sqlcmd_getAvatar(string $username) {
+
+        $encode_username = stringEncode($username);
+
         return "SELECT avatar FROM user 
-                WHERE username = '$username'";
+                WHERE username = '$encode_username'";
     }
     
     function sqlcmd_updateAvatar(string $username, string $link) : string {
+
+        $encode_username = stringEncode($username);
+
         return "UPDATE user SET avatar = '$link' 
-                WHERE username = '$username'";
+                WHERE username = '$encode_username'";
     }
     
     function sqlcmd_createCommentTable() : string {
         return "CREATE TABLE comment (
                     id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
-                    username VARCHAR(64) NOT NULL,
-                    date TIMESTAMP NOT NULL,
-                    content VARCHAR(1000) NOT NULL
+                    username VARCHAR(40) NOT NULL,
+                    date TIMESTAMP, -- NOT NULL,
+                    alive BOOLEAN NOT NULL DEFAULT TRUE,
+                    content VARCHAR(240) NOT NULL
                 )";
     }
 
-    function sqlcmd_addComment(string $username, $date, string $content) : string {
-        return "INSERT INTO comment (username, date, content) 
-                VALUES ('$username', '$date', '$content')";
+    function sqlcmd_getComment(int $page) : string {
+
+        $last_item = $page * 10;
+        $first_item = $last_item - 9;
+
+        return "SELECT * FROM comment 
+                WHERE id >= $first_item AND id <= $last_item";
+    }
+
+    function sqlcmd_addComment(string $username, string $content) : string {
+
+        $encode_username = stringEncode($username);
+        $encode_content = stringEncode($content);
+
+        return "INSERT INTO comment (username, content) 
+                VALUES ('$encode_username', '$encode_content')";
     }
     
 ?>

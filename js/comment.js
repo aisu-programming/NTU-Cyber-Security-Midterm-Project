@@ -1,14 +1,13 @@
-function getPageAmount() {
-        
-    var username = document.getElementById("username").value;
-    var password = document.getElementById("password").value;
-
-    post('api/login.php', {
-        action: 'login',
-        username: username,
-        password: password,
+function getComment(page) {
+    
+    post('api/comment.php', {
+        action: 'getComment',
+        page: page,
         r: r
     }, function (response) {
-        checkRedirect('login');
+        return response.result;
+    }, function (response) {
+        alert(response.error);
+        window.location.replace("/comment.php?page=1");
     });
 }

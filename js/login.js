@@ -9,6 +9,6 @@ function login() {
         password: password,
         r: r
     }, function (response) {
-        checkRedirect('login');
+        check('login');
     });
 }

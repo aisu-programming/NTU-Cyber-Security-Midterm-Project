@@ -1,7 +1,10 @@
 <?php
   session_start();
 
+  // Ban users who is not login but try to visit this page
+  // So this page only allow users who has JWT cookie
   if (!isset($_COOKIE['JWT'])) {
+    unset($_SESSION['username']);
     header("Location: login.php");
     exit;
   }
@@ -23,10 +26,11 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/profile.js"></script>
-    <script src="js/redirect.js"></script>
+    <script src="js/check.js"></script>
     <script>
       r = <?php echo $_SESSION['randomNumber']; ?>;
-      if (<?php echo isset($_SESSION['username']) * 1 ?> == 0) checkRedirect('profile');
+      <?php // Check if user has JWT but so SESSION ?>
+      if (<?php echo isset($_SESSION['username']) * 1 ?> == 0) check('profile');
     </script>
     <script defer>
       updateAvatar();
@@ -35,6 +39,7 @@
 
   <body>
     <div class="container-fluid h-100">
+
       <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
         <a class="navbar-brand p-0" href="/">
           <img src="logo.png" alt="Logo" style="width: 50px;">
@@ -45,11 +50,12 @@
             <a class="nav-link" href="/profile.php">個人頁面</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/comment.php">留言版</a>
+            <a class="nav-link" href="/comment.php?page=1">留言版</a>
           </li>
         </ul>
       </nav>
-      <div class="row justify-content-center h-100">
+
+      <div class="row justify-content-center h-100" style="padding-top: 65px;">
         <div class="col-3 col-md-2 h-100">
           <div class="row align-content-end h-50">
             <img class="img-thumbnail" style="background: #2eb8b8;" alt="Avatar" id="avatar">
@@ -71,6 +77,7 @@
         </div>
         <div class="col-7 col-md-6"></div>
       </div>
+
     </div>
   </body>
 

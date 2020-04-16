@@ -19,19 +19,17 @@ function getCookie(cname) {
     return "";
 }
 
-function checkRedirect(page) {
+function check(page) {
     
-    if (getCookie('JWT') != "") {
-        post('api/redirect.php', {
-            action: 'redirect',
-            page: page,
-            r: r
-        }, function (response) {
-            if (response.redirect)
-                window.location.replace(response.link);
-        }, function (response) {
-            if (response.redirect)
-                window.location.replace(response.link);
-        });
-    }
+    post('api/check.php', {
+        action: 'check',
+        page: page,
+        r: r
+    }, function (response) {
+        if (response.redirect)
+            window.location.replace(response.link);
+    }, function (response) {
+        if (response.redirect)
+            window.location.replace(response.link);
+    });
 }

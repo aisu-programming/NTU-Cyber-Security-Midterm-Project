@@ -98,9 +98,9 @@
                 }
                 else {
                     $db = mysqli_connect($configs['host'],
-                                        $configs['username'],
-                                        $configs['password'],
-                                        $configs['dbname']);
+                                         $configs['username'],
+                                         $configs['password'],
+                                         $configs['dbname']);
 
                     // Database connect failed
                     if (!$db) {

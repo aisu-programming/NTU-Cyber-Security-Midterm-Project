@@ -33,59 +33,34 @@
             $_SESSION['username'] = $username;
             return $jwt;
         }
-        catch (\Firebase\JWT\SignatureInvalidException $e) {
+        catch (UnexpectedValueException $e) {
             unset($_COOKIE['JWT']);
             unset($_SESSION['username']);
             return "Error: " . $e->getMessage();
         }
     }
 
-    function jwt_decode(string $jwt) : array {
+    function jwt_decode() : array {
 
         $configs = include($_SERVER['DOCUMENT_ROOT'] . "/api/config/config.php");
 
         JWT::$leeway = 60;
-        $decoded = JWT::decode($jwt, $configs['key'], array('HS512'));
+        $decoded = JWT::decode($_COOKIE['JWT'], $configs['key'], array('HS512'));
 
         return (array) $decoded;
     }
 
-    function jwt_isExpire(string $jwt) : bool {
+    function jwt_setUsername() : bool {
 
         try {
-            $exp = jwt_decode($jwt)['exp'];
-            if (time() > $exp) {
-                // Clear the JWT cookie if it's expired
-                unset($_COOKIE['JWT']);
-                unset($_SESSION['username']);
-                return true;
-            }
-            else return false;
-        }
-        catch (\Firebase\JWT\SignatureInvalidException $e) {
-            // Clear the JWT cookie if there's an error
-            unset($_COOKIE['JWT']);
-            unset($_SESSION['username']);
+            $_SESSION['username'] = jwt_decode()['username'];
             return true;
         }
-    }
-
-    function jwt_setUsername(string $jwt) : bool {
-
-        if (jwt_isExpire($jwt)) {
+        catch (Exception $e) {
+            // Clear both JWT cookie and SESSION if there's an error
+            unset($_COOKIE['JWT']);
+            unset($_SESSION['username']);
             return false;
-        }
-        else {
-            try {
-                $username = jwt_decode($jwt)['username'];
-                $_SESSION['username'] = $username;
-                return true;
-            }
-            catch (\Firebase\JWT\SignatureInvalidException $e) {
-                unset($_COOKIE['JWT']);
-                unset($_SESSION['username']);
-                return false;
-            }
         }
     }
 

@@ -31,6 +31,7 @@
     $url = array();
     array_push($url, $configs['referer']);
     array_push($url, $configs['referer'] . "index.php");
+    array_push($url, $configs['referer'] . "comment.php");
     array_push($url, $configs['referer'] . "login.php");
     array_push($url, $configs['referer'] . "register.php");
     array_push($url, $configs['referer'] . "profile.php");
@@ -53,12 +54,16 @@
 
         switch($_POST['action']) {
 
-            case 'redirect':
+            case 'check':
                 if (is_invalid('page')) {
                     $aResult['error'] = "Missing arguments!";
                 }
-                else if ($_POST['page'] == 'index') {
-                    if (jwt_setUsername($_COOKIE['JWT'])) {
+                else if (!isset($_COOKIE['JWT'])) {
+                    if ($configs['debug'])
+                        $aResult['error'] = "Missing JWT cookie!";
+                }
+                else if ($_POST['page'] == 'index' || $_POST['page'] == 'comment') {
+                    if (jwt_setUsername()) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = false;
                     }
@@ -69,11 +74,13 @@
                     }
                 }
                 else if ($_POST['page'] == 'login' || $_POST['page'] == 'register') {
-                    if (jwt_setUsername($_COOKIE['JWT'])) {
+                    // If SESSION set successfully, redirect to profile page
+                    if (jwt_setUsername()) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = true;
                         $aResult['link'] = $configs['referer'] . "profile.php";
                     }
+                    // If SESSION set failed, no need to redirect
                     else {
                         $aResult['redirect'] = false;
                         if ($configs['debug'])
@@ -81,10 +88,12 @@
                     }
                 }
                 else if ($_POST['page'] == 'profile') {
-                    if (jwt_setUsername($_COOKIE['JWT'])) {
+                    // If SESSION set successfully, no need to redirect
+                    if (jwt_setUsername()) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = false;
                     }
+                    // If SESSION set failed, redirect to login page
                     else {
                         $aResult['redirect'] = true;
                         $aResult['link'] = $configs['referer'] . "login.php";

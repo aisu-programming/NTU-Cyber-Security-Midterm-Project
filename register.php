@@ -1,9 +1,13 @@
 <?php
   session_start();
 
-  if (isset($_SESSION['username'])) {
+  // Ban users who was already login but try to visit this page
+  if (isset($_SESSION['username']) && isset($_COOKIE['JWT'])) {
     header("Location: profile.php");
     exit;
+  }
+  else if (isset($_SESSION['username']) && !isset($_COOKIE['JWT'])) {
+    unset($_SESSION['username']);
   }
 
   $_SESSION['randomNumber'] = mt_rand();
@@ -23,15 +27,17 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
     <script src="js/request.js"></script>
     <script src="js/register.js"></script>
-    <script src="js/redirect.js"></script>
+    <script src="js/check.js"></script>
     <script>
       r = <?php echo $_SESSION['randomNumber']; ?>;
-      checkRedirect('register');
+      <?php // Check and set SESSION if user has JWT ?>
+      if (getCookie('JWT') != "") check('register');
     </script>
   </head>
   
   <body>
     <div class="container-fluid h-100">
+
       <nav class="navbar navbar-expand-sm bg-dark navbar-dark fixed-top">
         <a class="navbar-brand p-0" href="/">
           <img src="logo.png" alt="Logo" style="width: 50px;">
@@ -39,7 +45,7 @@
         </a>
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="/comment.php">留言版</a>
+            <a class="nav-link" href="/comment.php?page=1">留言版</a>
           </li>
           <li class="nav-item" id="login-btn" style="display: inherit;">
             <a class="nav-link" href="/login.php">登入</a>
@@ -49,7 +55,8 @@
           </li>
         </ul>
       </nav>
-      <div class="row justify-content-center align-content-center h-100">
+
+      <div class="row justify-content-center align-content-center h-100" style="padding-top: 65px;">
         <div class="col-12 col-md-10" align="center">
           <div class="card" id="register-form">
             <div class="card-header">使用者註冊</div>
@@ -76,6 +83,7 @@
           </div>
         </div>
       </div>
+      
     </div>
   </body>
 

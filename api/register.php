@@ -51,6 +51,10 @@
                 if (is_invalid('username') || is_invalid('password')) {
                     $aResult['error'] = "Missing arguments!";
                 }
+                else if (strlen($_POST['username']) > 30) {
+                    if ($configs['debug'])
+                        $aResult['error'] = "Username too long!";
+                }
                 else {
                     $db = mysqli_connect($configs['host'],
                                          $configs['username'],
@@ -64,6 +68,7 @@
                         break;
                     }
                     
+                    // Create table 'user'
                     $sql_result = $db->query(sqlcmd_createUserTable());
                     if ($sql_result === FALSE && $db->error !== "Table 'user' already exists") {
                         $aResult['error'] = $db->error;
@@ -81,9 +86,13 @@
                     else if ($sql_result->num_rows === 1) {
                         $aResult['error'] = "Username has been taken!";
                     }
+                    // Database accident or being attacked
+                    else if ($sql_result->num_rows > 1) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                        $aResult['error'] = "Unexpected error! (Please report if you are not attacking me)";
+                    }
                     else {
-                        $sha512_pwd = hash('sha512', $_POST['password']);
-                        $sql_result = $db->query(sqlcmd_addUser($_POST['username'], $sha512_pwd));
+                        $sql_result = $db->query(sqlcmd_addUser($_POST['username'], $_POST['password']));
 
                         // Query failed
                         if ($sql_result === FALSE) {
@@ -92,9 +101,9 @@
                         }
                         else {
                             $jwt_result = jwt_create($_POST['username'],
-                                                 $configs['isser'],
-                                                 $configs['exp'],
-                                                 $configs['key']);
+                                                     $configs['isser'],
+                                                     $configs['exp'],
+                                                     $configs['key']);
                             if (strpos($jwt_result, "Error:") === 0) {
                                 $aResult['error'] = $jwt_result . " (Please report)";
                             }
