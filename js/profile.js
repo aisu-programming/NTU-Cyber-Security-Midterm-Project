@@ -11,13 +11,17 @@ function updateAvatar () {
 }
 
 function uploadImage() {
+    
+    var image = document.getElementById("upload-image").files[0];
+    if (image == undefined) {
+        alert('You didn\'t upload anything!');
+        return;
+    }
 
     var text = document.getElementById("upload-text");
     text.text = "上傳中";
     var spinner = document.getElementById("upload-spinner");
     spinner.style.display = "inherit";
-
-    var image = document.getElementById("upload-image").files[0];
 
     var data = new FormData();
     data.append('image', image);
@@ -49,7 +53,7 @@ function uploadImage() {
 
         error: function (xhr) {
             var response = xhr.responseJSON;
-            alert(response);
+            alert(response.data.error.message);
 
             text.text = "上傳";
             spinner.style.display = 'none';

@@ -1,7 +1,7 @@
 <?php
 
     // Fake 404 website, but can be recognize by 'X-Powered-By' in Response Header
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header($_SERVER["SERVER_PROTOCOL"] . " 404");
         echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
@@ -53,6 +53,7 @@
     function jwt_setUsername() : bool {
 
         try {
+            if (isset($_SESSION['username'])) unset($_SESSION['username']);
             $_SESSION['username'] = jwt_decode()['username'];
             return true;
         }

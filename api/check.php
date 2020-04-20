@@ -10,17 +10,38 @@
         else return false;
     }
 
-    // Prevent users from visiting this URL by methods except POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header($_SERVER['SERVER_PROTOCOL'] . " 403");
-        if ($configs['debug']) {
-            $aResult['error'] = "Invalid request method.";
-            echo json_encode($aResult);
+    function add_login_turn($configs) {
+        $db = mysqli_connect($configs['host'],
+                             $configs['username'],
+                             $configs['password'],
+                             $configs['dbname']);
+
+        // Database connect failed
+        if (!$db) {
+            header($_SERVER['SERVER_PROTOCOL'] . " 501");
+            $aResult['error'] = "Connect Error ($db->connect_errno) $db->connect_error";
+            return;
         }
-        exit;
+
+        $sql_result = $db->query(sqlcmd_addUserLoginTurn($_SESSION['username']));
+
+        // Query failed
+        if ($sql_result === FALSE) $output = "<br/>Unexpected error! (Please report)";
+        else {
+            $sql_result = $db->query(sqlcmd_getUserLoginTurn($_SESSION['username']));
+
+            // Query failed
+            if ($sql_result === FALSE || $sql_result->num_rows !== 1)
+                $output = "<br/>Unexpected error! (Please report)";
+            else $output = $sql_result->fetch_assoc()['login_turn'];
+        }
+
+        $sql_result = $db->query(sqlcmd_addNumberByOne('total_login_turn'));
+
+        $db->close();
+        return $output;
     }
 
-    // Visiting by POST, start the program
     session_start();
 
     $aResult = array();
@@ -65,6 +86,7 @@
                     if (jwt_setUsername()) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = false;
+                        $_SESSION['loginTurn'] = add_login_turn($configs);
                     }
                     else {
                         $aResult['redirect'] = false;
@@ -78,6 +100,7 @@
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = true;
                         $aResult['link'] = $configs['referer'] . "profile.php";
+                        $_SESSION['loginTurn'] = add_login_turn($configs);
                     }
                     // If SESSION set failed, no need to redirect
                     else {
@@ -86,11 +109,12 @@
                             $aResult['error'] = "Session set failed!";
                     }
                 }
-                else if ($_POST['page'] == 'profile') {
+                else if ($_POST['page'] == 'profile' || $_POST['page'] = 'postComment') {
                     // If SESSION set successfully, no need to redirect
                     if (jwt_setUsername()) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['redirect'] = false;
+                        $_SESSION['loginTurn'] = add_login_turn($configs);
                     }
                     // If SESSION set failed, redirect to login page
                     else {

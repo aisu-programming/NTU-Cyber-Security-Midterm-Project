@@ -19,11 +19,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
     <script src="js/request.js"></script>
-    <script src="js/login.js"></script>
+    <script src="js/aisu.js"></script>
     <script src="js/check.js"></script>
     <script>
       r = <?php echo $_SESSION['randomNumber']; ?>;
-      if (<?php echo isset($_COOKIE['JWT']) * 1 ?> == 1 && <?php echo isset($_SESSION['username']) * 1 ?> == 0) check('index');
+      if (getCookie('JWT') != "" && <?php echo isset($_SESSION['username']) * 1 ?> == 0) check('index');
+      updateTotalLoginTurn();
     </script>
   </head>
 
@@ -62,27 +63,41 @@
 
       <div class="row justify-content-start align-content-center h-100" style="padding-top: 65px;">
         <div class="col-6 col-md-5">
-          <div class="row justify-content-end h-100" style="padding-left: 15px;">
+          <div class="row justify-content-end align-content-center h-100" style="padding-left: 15px;">
             <img class="img-thumbnail" style="max-height: 600px; object-fit: contain;" src="me.jpg" alt="Me">
           </div>
         </div>
         <div class="col-6 col-md-7">
           <div class="row justify-content-start align-content-center h-100">
-            <div class="col-12">
+
+            <div class="col-12" style="margin-bottom: 15px;">
               <div class="card" id="login-form" style="max-width: 500px;">
                 <div class="card-header" align="center">個人簡介</div>
                 <div class="card-body">
                   <div class="form-group text-left">
-                    <a>姓名：<br/>
+                    <div>姓名：<br/>
                     　洪偉倫<br/>
                     綽號：<br/>
                     　冰塊<br/><br/>
                     目前就讀：<br/>
-                    　台師大資工大二<br/></a>
+                    　台師大資工大二</div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <div class="col-12">
+              <div class="card" id="login-form" style="max-width: 500px;">
+                <div class="card-header" align="center">關於網站</div>
+                <div class="card-body">
+                  <div class="form-group text-left">
+                    <div>目前總登入人數：</div>
+                    <div id="total_login_turn"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

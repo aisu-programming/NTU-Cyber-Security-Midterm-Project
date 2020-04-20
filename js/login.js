@@ -9,6 +9,7 @@ function login() {
         password: password,
         r: r
     }, function (response) {
+        alert(response.result);
         check('login');
     });
 }

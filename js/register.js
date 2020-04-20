@@ -5,7 +5,7 @@ function register() {
     var pwdcheck = document.getElementById("pwdcheck").value;
 
     if (username.length > 30) {
-        alert("The length of username should 30 at most!");
+        alert("The length of username should be 30 at most!");
         return;
     }
 

@@ -7,12 +7,12 @@ function get(url, data)
         data: data,
 
         success: function (response) {
-          alert(response.result);
+          if (result in response) alert(response.result);
         },
 
         error: function (xhr) {
           var response = xhr.responseJSON;
-          alert(response.error);
+          if (error in response) alert(response.error);
         }
       });
 }
@@ -21,10 +21,10 @@ function post(
   url,
   data,
   successFunction = function (response) {
-    alert(response.result);
+    if (result in response) alert(response.result);
   },
   errorFunction = function (response) {
-    alert(response.error);
+    if (error in response) alert(response.error);
   })
 {
     $.ajax({

@@ -1,0 +1,13 @@
+# composer
+composer.lock
+vendor
+
+# php
+.htaccess
+
+# zip
+*.zip
+
+# vs & vs code cache
+.vs
+.vscode

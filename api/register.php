@@ -10,17 +10,6 @@
         else return false;
     }
 
-    // Prevent users from visiting this URL by methods except POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header($_SERVER['SERVER_PROTOCOL'] . " 403");
-        if ($configs['debug']) {
-            $aResult['error'] = 'Invalid request method.';
-            echo json_encode($aResult);
-        }
-        exit;
-    }
-
-    // Visiting by POST, start the program
     session_start();
 
     $aResult = array();
@@ -65,13 +54,6 @@
                     if (!$db) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 501");
                         $aResult['error'] = "Connect Error ($db->connect_errno) $db->connect_error";
-                        break;
-                    }
-                    
-                    // Create table 'user'
-                    $sql_result = $db->query(sqlcmd_createUserTable());
-                    if ($sql_result === FALSE && $db->error !== "Table 'user' already exists") {
-                        $aResult['error'] = $db->error;
                         break;
                     }
 

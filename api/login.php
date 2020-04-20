@@ -10,17 +10,6 @@
         else return false;
     }
 
-    // Prevent users from visiting this URL by methods except POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header($_SERVER['SERVER_PROTOCOL'] . " 403");
-        if ($configs['debug']) {
-            $aResult['error'] = "Invalid request method.";
-            echo json_encode($aResult);
-        }
-        exit;
-    }
-
-    // Visiting by POST, start the program
     session_start();
 
     $aResult = array();
@@ -64,14 +53,6 @@
                         break;
                     }
 
-                    // Create table 'user'
-                    $sql_result = $db->query(sqlcmd_createUserTable());
-                    if ($sql_result === FALSE && $db->error !== "Table 'user' already exists") {
-                        $aResult['error'] = $db->error;
-                        break;
-                    }
-
-                    // Hash password by SHA512
                     $sql_result = $db->query(sqlcmd_getUser($_POST['username'], $_POST['password']));
 
                     // Query failed
@@ -98,7 +79,7 @@
                         }
                         else {
                             header($_SERVER['SERVER_PROTOCOL'] . " 200");
-                            $aResult['result'] = "Login succeed by '" . $_POST['username'] . "'.";
+                            $aResult['result'] = "Login succeed with '" . $_POST['username'] . "'.";
                         }
                     }
                     

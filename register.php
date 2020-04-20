@@ -62,15 +62,15 @@
             <div class="card-header">使用者註冊</div>
             <div class="card-body">
               <div class="form-group text-left">
-                <label for="username">設定帳號:</label>
-                <input type="text" class="form-control" id="username">
+                <label for="username">設定帳號：<br>（限制長度：30 個英文字母 / 10 個中文字）</label>
+                <input type="text" class="form-control" maxlength="30" id="username">
               </div>
               <div class="form-group text-left">
-                <label for="password">設定密碼:</label>
+                <label for="password">設定密碼：</label>
                 <input type="password" class="form-control" id="password">
               </div>
               <div class="form-group text-left">
-                <label for="pwdcheck">確認密碼:</label>
+                <label for="pwdcheck">確認密碼：</label>
                 <input type="password" class="form-control" id="pwdcheck">
               </div>
               <div class="row-fluid">

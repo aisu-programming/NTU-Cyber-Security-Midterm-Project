@@ -10,17 +10,6 @@
         else return false;
     }
 
-    // Prevent users from visiting this URL by methods except POST
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        header($_SERVER['SERVER_PROTOCOL'] . " 403");
-        if ($configs['debug']) {
-            $aResult['error'] = "Invalid request method.";
-            echo json_encode($aResult);
-        }
-        exit;
-    }
-
-    // Visiting by POST, start the program
     session_start();
 
     $aResult = array();
@@ -30,7 +19,7 @@
     // Check referer
     $url = array();
     array_push($url, $configs['referer'] . "comment.php?page=");
-    array_push($url, $configs['referer'] . "post.php");
+    array_push($url, $configs['referer'] . "postComment.php");
     if (strpos($_SERVER['HTTP_REFERER'], $url[0]) !== 0 && $_SERVER['HTTP_REFERER'] != $url[1]) {
         if ($configs['debug'])
             $aResult['error'] = "Unauthorized referer.";
@@ -49,59 +38,7 @@
 
         switch($_POST['action']) {
 
-            case 'getComment':
-                if (is_invalid('page')) {
-                    $aResult['error'] = "Missing arguments!";
-                }
-                else {
-                    $db = mysqli_connect($configs['host'],
-                                         $configs['username'],
-                                         $configs['password'],
-                                         $configs['dbname']);
-
-                    // Database connect failed
-                    if (!$db) {
-                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
-                        $aResult['error'] = "Connect Error ($db->connect_errno) $db->connect_error";
-                        break;
-                    }
-
-                    $sql_result = $db->query(sqlcmd_createCommentTable());
-                    if ($sql_result === FALSE && $db->error !== "Table 'comment' already exists") {
-                        $aResult['error'] = $db->error;
-                        break;
-                    }
-
-                    $page = (int) $_POST['page'];
-                    if ($page < 1) {
-                        if ($configs['debug'])
-                            $aResult['error'] = "Invalid page!";
-                        break;
-                    }
-                    $sql_result = $db->query(sqlcmd_getComment($page));
-
-                    // Query failed
-                    if ($sql_result === FALSE) {
-                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
-                        $aResult['error'] = $db->error;
-                    }
-                    else {
-                        $aResult['comment'] = array();
-                        while ($row = $sql_result->fetch_assoc()) {
-                            $result = array('username'=>stringDecode($row['username']), 
-                                            'content'=>stringDecode($row['content']));
-                            array_push($aResult['comment'], json_encode($result));
-                        }
-                        header($_SERVER['SERVER_PROTOCOL'] . " 200");
-                        $aResult['result'] = "Succeed!";
-                    }
-
-                    // Close the connection
-                    $db->close();
-                }
-                break;
-
-            case 'getComment':
+            case 'getComments':
                 if (is_invalid('page')) {
                     $aResult['error'] = "Missing arguments!";
                 }
@@ -122,6 +59,7 @@
                     $sql_result = $db->query(sqlcmd_createCommentTable());
                     if ($sql_result === FALSE && $db->error !== "Table 'comment' already exists") {
                         $aResult['error'] = $db->error;
+                        $db->close();
                         break;
                     }
 
@@ -130,24 +68,129 @@
                     if ($page < 1) {
                         if ($configs['debug'])
                             $aResult['error'] = "Invalid page!";
+                        $db->close();
                         break;
                     }
-                    $sql_result = $db->query(sqlcmd_getComment($page));
+                    $sql_result = $db->query(sqlcmd_getComments($page));
 
                     // Query failed
                     if ($sql_result === FALSE) {
                         header($_SERVER['SERVER_PROTOCOL'] . " 501");
                         $aResult['error'] = $db->error;
                     }
+                    // Being attacked
+                    else if ($sql_result->num_rows == 0 && $page != 1) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 403");
+                        $aResult['error'] = "Nope! This page got nothing.";
+                    }
+                    // Database accident
+                    else if ($sql_result->num_rows > 11) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                        $aResult['error'] = "Unexpected error! (Please report if you are not attacking me)";
+                    }
                     else {
-                        $aResult['comment'] = array();
+                        if ($sql_result->num_rows == 11) $aResult['next'] = true;
+                        else $aResult['next'] = false;
+
+                        $aResult['comments'] = array();
+                        $counter = 0;
                         while ($row = $sql_result->fetch_assoc()) {
-                            $result = array('username'=>stringDecode($row['username']), 
-                                            'content'=>stringDecode($row['content']));
-                            array_push($aResult['comment'], json_encode($result));
+
+                            $counter += 1;
+                            if ($counter == 11) break;
+
+                            if ($row['alive']) {
+                                if ($_SESSION['username'] == stringDecode($row['username'])) $editable = true;
+                                else $editable = false;
+                                $comment = array('id'=>$row['id'], 
+                                                 'avatar'=>$row['avatar'],
+                                                 'username'=>stringDecode($row['username']), 
+                                                 'title'=>stringDecode($row['title']), 
+                                                 'content'=>stringDecode($row['content']), 
+                                                 'editable'=>$editable);
+                            }
+                            else $comment = array('id'=>0);
+
+                            array_push($aResult['comments'], json_encode($comment));
                         }
                         header($_SERVER['SERVER_PROTOCOL'] . " 200");
                         $aResult['result'] = "Succeed!";
+                    }
+
+                    // Close the connection
+                    $db->close();
+                }
+                break;
+
+            case 'deleteComment':
+                if (is_invalid('id')) {
+                    $aResult['error'] = "Missing arguments!";
+                }
+                else {
+                    $db = mysqli_connect($configs['host'],
+                                         $configs['username'],
+                                         $configs['password'],
+                                         $configs['dbname']);
+
+                    // Database connect failed
+                    if (!$db) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                        $aResult['error'] = "Connect Error ($db->connect_errno) $db->connect_error";
+                        break;
+                    }
+
+                    // Create table 'comment'
+                    $sql_result = $db->query(sqlcmd_createCommentTable());
+                    if ($sql_result === FALSE && $db->error !== "Table 'comment' already exists") {
+                        $aResult['error'] = $db->error;
+                        $db->close();
+                        break;
+                    }
+
+                    // Get original data of the comment from database
+                    $id = (int) $_POST['id'];
+                    if ($id < 1) {
+                        if ($configs['debug'])
+                            $aResult['error'] = "Invalid id!";
+                        $db->close();
+                        break;
+                    }
+                    $sql_result = $db->query(sqlcmd_getCommentById($id));
+
+                    // Query failed
+                    if ($sql_result === FALSE) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                        $aResult['error'] = $db->error;
+                    }
+                    // No comment found
+                    else if ($sql_result->num_rows === 0) {
+                        if ($configs['debug'])
+                            $aResult['error'] = "Invalid id, no comment founded!";
+                    }
+                    // Database accident or being attacked
+                    else if ($sql_result->num_rows > 1) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                        $aResult['error'] = "Unexpected error! (Please report if you are not attacking me)";
+                    }
+                    // Authority check
+                    else if ($_SESSION['username'] != stringDecode($sql_result->fetch_assoc()['username'])) {
+                        header($_SERVER['SERVER_PROTOCOL'] . " 403");
+                        if ($configs['debug'])
+                            $aResult['error'] = "Unauthorized action!";
+                    }
+                    else {
+                        // Delete comment: Set alive to fasle
+                        $sql_result = $db->query(sqlcmd_deleteComment($id));
+
+                        // Query failed
+                        if ($sql_result === FALSE) {
+                            header($_SERVER['SERVER_PROTOCOL'] . " 501");
+                            $aResult['error'] = $db->error;
+                        }
+                        else {
+                            header($_SERVER['SERVER_PROTOCOL'] . " 200");
+                            $aResult['result'] = "Succeed!";
+                        }
                     }
 
                     // Close the connection
@@ -159,7 +202,14 @@
                 if (!isset($_SESSION['username']) || !isset($_COOKIE['JWT'])) {
                     $aResult['error'] = "Action unauthorized! (Please login first)";
                 }
-                else if (strlen($_POST['content']) > 180) {
+                else if (is_invalid('title') || is_invalid('content')) {
+                    $aResult['error'] = "Missing arguments!";
+                }
+                else if (strlen($_POST['title']) > 30) {
+                    if ($configs['debug'])
+                        $aResult['error'] = "Title too long!";
+                }
+                else if (strlen($_POST['content']) > 600) {
                     if ($configs['debug'])
                         $aResult['error'] = "Content too long!";
                 }
@@ -180,10 +230,11 @@
                     $sql_result = $db->query(sqlcmd_createCommentTable());
                     if ($sql_result === FALSE && $db->error !== "Table 'comment' already exists") {
                         $aResult['error'] = $db->error;
+                        $db->close();
                         break;
                     }
 
-                    $sql_result = $db->query(sqlcmd_addComment($_SESSION['username'], $_POST['content']));
+                    $sql_result = $db->query(sqlcmd_addComment($_SESSION['username'], $_POST['title'], $_POST['content']));
 
                     // Query failed
                     if ($sql_result === FALSE) {
